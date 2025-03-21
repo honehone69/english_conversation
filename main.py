@@ -17,6 +17,7 @@ from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import functions as ft
 import constants as ct
+from functions import transcribe_audio
 
 
 # 各種設定
@@ -194,10 +195,13 @@ if st.session_state.start_flg:
         audio_input_file_path = f"{ct.AUDIO_INPUT_DIR}/audio_input_{int(time.time())}.wav"
         ft.record_audio(audio_input_file_path)
 
+        if not Path(audio_input_file_path).exists():
+            print(f"ファイルが存在しません: {audio_input_file_path}")
+
         # 音声入力ファイルから文字起こしテキストを取得
         with st.spinner('音声入力をテキストに変換中...'):
-            transcript = ft.transcribe_audio(audio_input_file_path)
-            audio_input_text = transcript.text
+            transcript = transcribe_audio(audio_input_file_path)  # 文字列が返る
+            audio_input_text = transcript  # 修正: transcript.text ではなく transcript を直接使用
 
         # 音声入力テキストの画面表示
         with st.chat_message("user", avatar=ct.USER_ICON_PATH):
@@ -247,10 +251,13 @@ if st.session_state.start_flg:
         ft.record_audio(audio_input_file_path)
         st.session_state.shadowing_audio_input_flg = False
 
+        if not Path(audio_input_file_path).exists():
+            print(f"ファイルが存在しません: {audio_input_file_path}")
+
         with st.spinner('音声入力をテキストに変換中...'):
             # 音声入力ファイルから文字起こしテキストを取得
-            transcript = ft.transcribe_audio(audio_input_file_path)
-            audio_input_text = transcript.text
+            transcript = transcribe_audio(audio_input_file_path)
+            audio_input_text = transcript  # 修正: transcript.text ではなく transcript を直接使用
 
         # AIメッセージとユーザーメッセージの画面表示
         with st.chat_message("assistant", avatar=ct.AI_ICON_PATH):

@@ -18,6 +18,7 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain_openai import ChatOpenAI
 from langchain.chains import ConversationChain
 import constants as ct
+import whisper
 
 def record_audio(audio_input_file_path):
     """
@@ -38,24 +39,13 @@ def record_audio(audio_input_file_path):
     else:
         st.stop()
 
-def transcribe_audio(audio_input_file_path):
+def transcribe_audio(file_path: str) -> str:
     """
-    音声入力ファイルから文字起こしテキストを取得
-    Args:
-        audio_input_file_path: 音声入力ファイルのパス
+    OpenAI Whisperを使用して音声ファイルを文字起こしする関数。
     """
-
-    with open(audio_input_file_path, 'rb') as audio_input_file:
-        transcript = st.session_state.openai_obj.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_input_file,
-            language="en"
-        )
-    
-    # 音声入力ファイルを削除
-    os.remove(audio_input_file_path)
-
-    return transcript
+    model = whisper.load_model("base")  # モデルサイズを選択: tiny, base, small, medium, large
+    result = model.transcribe(file_path)
+    return result['text']
 
 def save_to_wav(llm_response_audio, audio_output_file_path):
     """
