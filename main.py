@@ -5,7 +5,6 @@ from time import sleep
 from pathlib import Path
 from streamlit.components.v1 import html
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.chains import ConversationChain
 from langchain.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,

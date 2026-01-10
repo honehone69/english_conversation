@@ -38,11 +38,15 @@ def record_audio(audio_input_file_path):
     else:
         st.stop()
 
+@st.cache_resource
+def load_whisper_model():
+    return whisper.load_model("base")
+
 def transcribe_audio(file_path: str) -> str:
     """
     OpenAI Whisperを使用して音声ファイルを文字起こしする関数。
     """
-    model = whisper.load_model("base")  # モデルサイズを選択: tiny, base, small, medium, large
+    model = load_whisper_model()  # モデルサイズを選択: tiny, base, small, medium, large
     result = model.transcribe(file_path)
     return result['text']
 
@@ -121,7 +125,8 @@ def create_chain(system_template):
     ])
 
     # LCEL (LangChain Expression Language) を使用したパイプライン記法
-    chain = prompt | st.session_state.llm | StrOutputParser()
+    # .with_retry() を追加して、APIエラー時に自動リトライを行う（エラーハンドリング）
+    chain = (prompt | st.session_state.llm | StrOutputParser()).with_retry(stop_after_attempt=3)
 
     return chain
 
