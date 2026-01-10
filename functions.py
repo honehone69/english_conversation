@@ -14,9 +14,8 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
-from langchain.memory import ConversationSummaryBufferMemory
 from langchain_openai import ChatOpenAI
-from langchain.chains import ConversationChain
+from langchain_core.output_parsers import StrOutputParser
 import constants as ct
 import whisper
 
@@ -112,7 +111,7 @@ def play_wav(audio_output_file_path, speed=1.0):
 
 def create_chain(system_template):
     """
-    LLMによる回答生成用のChain作成
+    LLMによる回答生成用のChain作成 (LCEL版)
     """
 
     prompt = ChatPromptTemplate.from_messages([
@@ -120,25 +119,23 @@ def create_chain(system_template):
         MessagesPlaceholder(variable_name="history"),
         HumanMessagePromptTemplate.from_template("{input}")
     ])
-    chain = ConversationChain(
-        llm=st.session_state.llm,
-        memory=st.session_state.memory,
-        prompt=prompt
-    )
+
+    # LCEL (LangChain Expression Language) を使用したパイプライン記法
+    chain = prompt | st.session_state.llm | StrOutputParser()
 
     return chain
 
 def create_problem_and_play_audio():
     """
     問題生成と音声ファイルの再生
-    Args:
-        chain: 問題文生成用のChain
-        speed: 再生速度（1.0が通常速度、0.5で半分の速さ、2.0で倍速など）
-        openai_obj: OpenAIのオブジェクト
     """
 
     # 問題文を生成するChainを実行し、問題文を取得
-    problem = st.session_state.chain_create_problem.predict(input="")
+    # LCELに移行したため、.invokeを使用。このChainは会話履歴を必要としないため、historyは空リストを渡す。
+    problem = st.session_state.chain_create_problem.invoke({
+        "input": "",
+        "history": []
+    })
 
     # LLMからの回答を音声データに変換
     llm_response_audio = st.session_state.openai_obj.audio.speech.create(
@@ -161,6 +158,10 @@ def create_evaluation():
     ユーザー入力値の評価生成
     """
 
-    llm_response_evaluation = st.session_state.chain_evaluation.predict(input="")
+    # LCELに移行したため、.invokeを使用。このChainは会話履歴を必要としないため、historyは空リストを渡す。
+    llm_response_evaluation = st.session_state.chain_evaluation.invoke({
+        "input": "",
+        "history": []
+    })
 
     return llm_response_evaluation

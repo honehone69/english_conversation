@@ -209,8 +209,21 @@ if st.session_state.start_flg:
 
         with st.spinner("回答の音声読み上げ準備中..."):
             # ユーザー入力値をLLMに渡して回答取得
-            llm_response = st.session_state.chain_basic_conversation.predict(input=audio_input_text)
-            
+            # LCELに移行したため、手動でメモリを管理
+            # 1. メモリから会話履歴をロード
+            history = st.session_state.memory.load_memory_variables({})["history"]
+
+            # 2. LCELチェーンを実行 (.invoke)
+            llm_response = st.session_state.chain_basic_conversation.invoke({
+                "input": audio_input_text,
+                "history": history
+            })
+
+            # 3. 新しいやり取りをメモリに保存
+            st.session_state.memory.save_context(
+                {"input": audio_input_text}, {"output": llm_response}
+            )
+
             # LLMからの回答を音声データに変換
             llm_response_audio = st.session_state.openai_obj.audio.speech.create(
                 model="tts-1",
